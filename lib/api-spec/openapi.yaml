@@ -1,0 +1,420 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: TMDB Embed Player API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: tmdb
+    description: TMDB proxy operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /tmdb/search:
+    get:
+      operationId: searchMedia
+      tags: [tmdb]
+      summary: Search movies and TV shows
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [movie, tv, multi]
+            default: multi
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+
+  /tmdb/movie/{id}:
+    get:
+      operationId: getMovie
+      tags: [tmdb]
+      summary: Get movie details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movie details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MovieDetail"
+
+  /tmdb/tv/{id}:
+    get:
+      operationId: getTv
+      tags: [tmdb]
+      summary: Get TV show details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: TV show details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TvDetail"
+
+  /tmdb/movie/{id}/videos:
+    get:
+      operationId: getMovieVideos
+      tags: [tmdb]
+      summary: Get movie trailers/videos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movie videos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoResults"
+
+  /tmdb/tv/{id}/videos:
+    get:
+      operationId: getTvVideos
+      tags: [tmdb]
+      summary: Get TV show trailers/videos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: TV show videos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoResults"
+
+  /tmdb/trending:
+    get:
+      operationId: getTrending
+      tags: [tmdb]
+      summary: Get trending movies and TV shows
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, movie, tv]
+            default: all
+        - name: timeWindow
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week]
+            default: week
+      responses:
+        "200":
+          description: Trending results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+
+  /tmdb/movie/{id}/embed:
+    get:
+      operationId: getMovieEmbed
+      tags: [tmdb]
+      summary: Get complete embed data for a movie (details + trailer)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movie embed data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmbedData"
+
+  /tmdb/tv/{id}/embed:
+    get:
+      operationId: getTvEmbed
+      tags: [tmdb]
+      summary: Get complete embed data for a TV show (details + trailer)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: TV embed data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmbedData"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    MediaItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: ["string", "null"]
+        name:
+          type: ["string", "null"]
+        overview:
+          type: ["string", "null"]
+        posterPath:
+          type: ["string", "null"]
+        backdropPath:
+          type: ["string", "null"]
+        voteAverage:
+          type: number
+        releaseDate:
+          type: ["string", "null"]
+        firstAirDate:
+          type: ["string", "null"]
+        mediaType:
+          type: ["string", "null"]
+        popularity:
+          type: number
+      required:
+        - id
+        - voteAverage
+        - popularity
+
+    SearchResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaItem"
+        totalResults:
+          type: integer
+        totalPages:
+          type: integer
+        page:
+          type: integer
+      required:
+        - results
+        - totalResults
+        - totalPages
+        - page
+
+    Genre:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - name
+
+    MovieDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        overview:
+          type: ["string", "null"]
+        posterPath:
+          type: ["string", "null"]
+        backdropPath:
+          type: ["string", "null"]
+        voteAverage:
+          type: number
+        releaseDate:
+          type: ["string", "null"]
+        runtime:
+          type: ["integer", "null"]
+        genres:
+          type: array
+          items:
+            $ref: "#/components/schemas/Genre"
+        tagline:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+        budget:
+          type: ["integer", "null"]
+        revenue:
+          type: ["integer", "null"]
+      required:
+        - id
+        - title
+        - voteAverage
+        - genres
+
+    TvDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        overview:
+          type: ["string", "null"]
+        posterPath:
+          type: ["string", "null"]
+        backdropPath:
+          type: ["string", "null"]
+        voteAverage:
+          type: number
+        firstAirDate:
+          type: ["string", "null"]
+        numberOfSeasons:
+          type: ["integer", "null"]
+        numberOfEpisodes:
+          type: ["integer", "null"]
+        genres:
+          type: array
+          items:
+            $ref: "#/components/schemas/Genre"
+        tagline:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - voteAverage
+        - genres
+
+    Video:
+      type: object
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+        site:
+          type: string
+        type:
+          type: string
+        official:
+          type: boolean
+      required:
+        - id
+        - key
+        - name
+        - site
+        - type
+        - official
+
+    VideoResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Video"
+      required:
+        - results
+
+    EmbedData:
+      type: object
+      properties:
+        id:
+          type: integer
+        mediaType:
+          type: string
+          enum: [movie, tv]
+        title:
+          type: string
+        overview:
+          type: ["string", "null"]
+        posterPath:
+          type: ["string", "null"]
+        backdropPath:
+          type: ["string", "null"]
+        voteAverage:
+          type: number
+        releaseDate:
+          type: ["string", "null"]
+        runtime:
+          type: ["integer", "null"]
+        genres:
+          type: array
+          items:
+            $ref: "#/components/schemas/Genre"
+        tagline:
+          type: ["string", "null"]
+        trailerKey:
+          type: ["string", "null"]
+        trailerName:
+          type: ["string", "null"]
+        numberOfSeasons:
+          type: ["integer", "null"]
+        numberOfEpisodes:
+          type: ["integer", "null"]
+      required:
+        - id
+        - mediaType
+        - title
+        - voteAverage
+        - genres
